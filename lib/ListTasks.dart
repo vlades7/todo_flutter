@@ -9,23 +9,32 @@ class _ListTasksState extends State<ListTasks> {
   final title = 'Список задач';
   static const DARK_RED_COLOR = Color(0xffcf0000);
 
-  static int _counter = 1;
-  final List<String> _tasks = <String>[];
-  final Set<String> _completedTasks = Set<String>();
+  Set<String> _tasks = Set<String>();
+  Set<String> _completedTasks = Set<String>();
 
   ScrollController _scrollController = ScrollController();
+  TextEditingController _textEditingController = TextEditingController();
 
+  @override
+  void initState() {
+    super.initState();
+  }
+  
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: Text(title),
+        actions: <Widget>[
+          IconButton(
+            icon: Icon(
+              Icons.add_circle_outline,
+            ),
+            onPressed: () => {_createTask()},
+          )
+        ],
       ),
       body: _buildBody(),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => _createTasks(),
-        child: const Icon(Icons.add),
-      ),
       bottomNavigationBar: ButtonBar(
         buttonMinWidth: MediaQuery.of(context).size.width / 2 - 12,
         mainAxisSize: MainAxisSize.min,
@@ -44,7 +53,7 @@ class _ListTasksState extends State<ListTasks> {
       return Scrollbar(child: _buildTasks());
     }
   }
-  
+
   Widget _buildInit() {
     return Padding(
       padding: EdgeInsets.zero,
@@ -70,7 +79,7 @@ class _ListTasksState extends State<ListTasks> {
       itemCount: _tasks.length,
       itemBuilder: (context, index) => Container(
         height: 50,
-        child: Center(child: _buildRow(_tasks[index])),
+        child: Center(child: _buildRow(_tasks.toList()[index])),
       ),
       separatorBuilder: (BuildContext context, int index) => const Divider(),
     );
@@ -105,16 +114,42 @@ class _ListTasksState extends State<ListTasks> {
     );
   }
 
-  void _createTasks() {
-    _tasks.add("Задача №$_counter");
-    _incrementCounter();
-    _scrollBottom();
+  void _createTask() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Добавить задачу:'),
+          content: TextField(
+            controller: _textEditingController,
+            textCapitalization: TextCapitalization.sentences,
+            autofocus: true,
+          ),
+          actions: <Widget>[
+            FlatButton(
+              child: Text('Отменить'),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+            FlatButton(
+              child: Text('Добавить'),
+              onPressed: () => _addTask(),
+            ),
+          ],
+        );
+      },
+    );
   }
 
-  void _incrementCounter() {
-    setState(() {
-      _counter++;
-    });
+  void _addTask() {
+    String task = _textEditingController.value.text;
+    if (task != "") {
+      _tasks.add(task);
+    }
+    _textEditingController.clear();
+    Navigator.of(context).pop();
+    _scrollBottom();
   }
 
   void _deleteTask(String task) {
@@ -149,8 +184,10 @@ class _ListTasksState extends State<ListTasks> {
 
   void _scrollBottom() {
     if (_scrollController.hasClients) {
-      _scrollController.animateTo(_scrollController.position.maxScrollExtent + 80,
-          duration: const Duration(milliseconds: 500), curve: Curves.linear);
+      _scrollController.animateTo(
+          _scrollController.position.maxScrollExtent + 80,
+          duration: const Duration(milliseconds: 500),
+          curve: Curves.linear);
     }
   }
 }
